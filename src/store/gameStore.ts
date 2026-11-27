@@ -378,6 +378,10 @@ export const useGameStore = create<GameState>((set, get) => {
   };
 });
 
+if (typeof window !== 'undefined') {
+  (window as any).__codequest_store = useGameStore;
+}
+
 function exportSave(state: GameState): SaveData {
   return {
     version: 1,

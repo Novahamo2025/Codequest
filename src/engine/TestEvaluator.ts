@@ -35,9 +35,11 @@ export class TestEvaluator {
 
     // Run test cases
     for (const testCase of mission.testCases) {
-      const inputs = providedInputs && providedInputs.length > 0 
-        ? providedInputs 
-        : (testCase.inputs || []);
+      // Prioritize the test case's own defined inputs so different test cases can test different inputs.
+      // Fallback to providedInputs from the UI only if the test case does not define its own inputs.
+      const inputs = (testCase.inputs && testCase.inputs.length > 0)
+        ? testCase.inputs
+        : (providedInputs && providedInputs.length > 0 ? providedInputs : []);
 
       // If test case defines a hidden test script (e.g. testing functions or classes)
       const testScript = testCase.testScript;
@@ -78,6 +80,20 @@ export class TestEvaluator {
         const actualLines = actualOutput.split(/\r?\n/).map(l => l.trimEnd()).join('\n');
         const expectedLines = expectedOutput.split(/\r?\n/).map(l => l.trimEnd()).join('\n');
         passed = actualLines === expectedLines;
+        if (!passed) {
+          // Additional check: tolerate input prompts, trailing punctuation or minor whitespace differences
+          const actualTrimmedLines = actualOutput.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const expectedTrimmedLines = expectedOutput.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (
+            actualTrimmedLines.length === expectedTrimmedLines.length &&
+            expectedTrimmedLines.every((exp, idx) => {
+              const act = actualTrimmedLines[idx];
+              return act === exp || act.endsWith(exp) || act.replace(/\s+/g, ' ') === exp.replace(/\s+/g, ' ');
+            })
+          ) {
+            passed = true;
+          }
+        }
         results.push({
           id: testCase.id,
           description: testCase.description,

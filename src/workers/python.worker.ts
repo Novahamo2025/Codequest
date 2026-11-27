@@ -96,8 +96,6 @@ class CodeQuestIO:
         self.inputs_queue = list(inputs) if inputs else []
     
     def custom_input(self, prompt=""):
-        if prompt:
-            self.stdout_buf.write(str(prompt))
         if self.inputs_queue:
             return str(self.inputs_queue.pop(0))
         return ""
